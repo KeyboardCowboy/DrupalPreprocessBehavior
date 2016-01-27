@@ -89,6 +89,7 @@ usages in Drupal Behaviors.
     // you need them.
     attach: function(context, settings) {
       this.$loginForm.css('background-color', 'red');
+      alert(this.settings.staticValue + ' says the time is ' + this.settings.currentTime);
     }
   };
   ```
@@ -108,3 +109,7 @@ usages in Drupal Behaviors.
     element as a context to limit the scope for this element.
   - `required` (optional): Tell the preprocessor that this element is
     required for it to work and to not attached the behavior if it does not.
+
+A `settings` parameter will be added to the behavior containing the default
+values from the preprocessor and the values from the Drupal.settings object
+defined by the behavior if it was set.
