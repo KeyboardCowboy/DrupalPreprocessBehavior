@@ -26,7 +26,52 @@ usages in Drupal Behaviors.
    information is built into the preprocessor.
 
 ## How it works:
-**Example**  
+**Load the Library and Add Some Custom Settings**
+  ```php
+  /**
+   * Implements hook_page_alter().
+   *
+   * @param $page
+   */
+  function my_module_page_alter(&$page) {
+    $settings = array(
+      'myModule' => array(
+        'myBehaviorSettings' => array(
+          'currentTime' => time(),
+          'staticValue' => 'Chris',
+        ),
+      ),
+    );
+  
+    $page['content']['#attached']['libraries_load'][] = array('DrupalPreprocessBehavior');
+    $page['content']['#attached']['js'][] = array(
+      'type' => 'setting',
+      'data' => $settings,
+    );
+  }
+  
+  /**
+   * Implements hook_library().
+   */
+  function my_module_libraries_info() {
+    // Behavior preprocessor.
+    $libraries['DrupalPreprocessBehavior'] = array(
+      'title' => 'Behavior Preprocessor',
+      'version' => '0.1.0',
+      'files' => array(
+        'js' => array(
+          'drupal-preprocess-behavior.js',
+        ),
+      ),
+      'vendor url' => '',
+      'download url' => '',
+    );
+  
+    return $libraries;
+  }
+  ```
+
+**Create Your Behavior**  
   ```javascript
   Drupal.behaviors.myBehavior = {
     // Allow the behavior to be preprocessed.
