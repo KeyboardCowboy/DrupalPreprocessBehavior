@@ -56,15 +56,15 @@ usages in Drupal Behaviors.
   function my_module_libraries_info() {
     // Behavior preprocessor.
     $libraries['DrupalPreprocessBehavior'] = array(
-      'title' => 'Behavior Preprocessor',
+      'name' => 'Behavior Preprocessor',
       'version' => '0.1.0',
       'files' => array(
         'js' => array(
           'drupal-preprocess-behavior.js',
         ),
       ),
-      'vendor url' => '',
-      'download url' => '',
+      'vendor url' => 'https://github.com/KeyboardCowboy/DrupalPreprocessBehavior',
+      'download url' => 'https://raw.githubusercontent.com/KeyboardCowboy/DrupalPreprocessBehavior/master/drupal-preprocess-behavior.js',
     );
   
     return $libraries;
@@ -113,3 +113,7 @@ usages in Drupal Behaviors.
 A `settings` parameter will be added to the behavior containing the default
 values from the preprocessor and the values from the Drupal.settings object
 defined by the behavior if it was set.
+
+## Additional Features
+- `Drupal.attachBehavior()` to attach a single behavior.
+- `Drupal.detachBehavior()` to detach a single behavior.

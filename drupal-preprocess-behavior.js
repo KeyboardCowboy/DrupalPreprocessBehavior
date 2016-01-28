@@ -10,25 +10,82 @@
   Drupal.attachBehaviors = function (context, settings) {
     context = context || document;
     settings = settings || Drupal.settings;
+
     // Execute all of them.
     $.each(Drupal.behaviors, function (name) {
       if ($.isFunction(this.attach)) {
-        if (typeof this.preprocess !== 'undefined' && this.preprocess === true) {
-          try {
-            Drupal.preprocessBehavior(this, context, settings);
-            this.attach(context, settings);
-          }
-          catch (err) {
-            if (this.settings.debug) {
-              console.warn("Drupal Behavior '" + name + "' was not attached. " + err);
-            }
+        Drupal._attachBehavior(this, name, context, settings);
+      }
+    });
+  };
+
+  /**
+   * Attach a single behavior.
+   *
+   * @param name
+   * @param context
+   * @param settings
+   */
+  Drupal.attachBehavior = function(name, context, settings) {
+    context = context || document;
+    settings = settings || Drupal.settings;
+
+    if (typeof Drupal.behaviors[name] === 'object' && $.isFunction(Drupal.behaviors[name].attach)) {
+      Drupal._attachBehavior(Drupal.behaviors[name], name, context, settings);
+    }
+  };
+
+  /**
+   * Detach a single behavior.
+   *
+   * @param name
+   * @param context
+   * @param settings
+   * @param trigger
+   */
+  Drupal.detachBehavior = function(name, context, settings, trigger) {
+    context = context || document;
+    settings = settings || Drupal.settings;
+    trigger = trigger || 'unload';
+
+    if (typeof Drupal.behaviors[name] === 'object' && $.isFunction(Drupal.behaviors[name].detach)) {
+      this.detach(context, settings, trigger);
+    }
+  };
+
+  /**
+   * Private function to perform the behavior attachment.
+   *
+   * @param behavior
+   * @param name
+   * @param context
+   * @param settings
+   * @private
+   */
+  Drupal._attachBehavior = function(behavior, name, context, settings) {
+    if (typeof behavior.preprocess !== 'undefined' && behavior.preprocess === true) {
+      try {
+        Drupal.preprocessBehavior(behavior, context, settings);
+        behavior.attach(context, settings);
+      }
+      catch (err) {
+        var str = err.toString();
+
+        // Process the errors thrown from the preprocessor.  Pass other
+        // exceptions on through for normal processing.
+        if (str.indexOf('[PREPROCESS]') === 0) {
+          if (behavior.settings.debug) {
+            console.warn("Drupal Behavior '" + name + "' was not attached. " + str);
           }
         }
         else {
-          this.attach(context, settings);
+          throw err;
         }
       }
-    });
+    }
+    else {
+      behavior.attach(context, settings);
+    }
   };
 
   /**
@@ -106,22 +163,29 @@
    *   The Drupal.settings object or other passed into the behavior.
    */
   Drupal.preprocessBehavior = function(behavior, context, settings) {
+    var errPrefix = '[PREPROCESS] ';
+
     // Add a local settings object if one is not set.
     behavior.settings = behavior.settings || {};
 
     // Add the global default settings.
-    behavior.settings = $.extend({debug: false}, behavior.settings);
+    behavior.settings = $.extend({debug: true}, behavior.settings);
 
     // Merge Drupal.settings as defined in the behavior.
-    if (behavior.drupalSettings.length > 0) {
+    if (typeof behavior.drupalSettings === 'object') {
       var inlineSettings = getChainedValue(settings, behavior.drupalSettings);
       if (typeof inlineSettings === 'object') {
         $.extend(behavior.settings, inlineSettings);
       }
       else {
-        throw 'Drupal.settings.' + behavior.drupalSettings + ' is not an object.';
+        throw errPrefix + 'Drupal.settings.' + behavior.drupalSettings + ' is not an object.';
       }
     }
+
+    // @todo: Can we lookup any objects on the behavior that begin with a dollar
+    // sign?  That way they can be declared in the behavior as $myElement
+    // instead of an array of elements and the code inspector won't throw a
+    // hissy when you try to reference them.
 
     // Load the DOM elements needed for the behavior to work.
     for (var e in behavior.elements) {
@@ -141,7 +205,7 @@
 
       // Check for requirements.
       if (element.required && behavior[elementName].length === 0) {
-        throw 'Required element ' + elementName + ' was not found.';
+        throw errPrefix + 'Required element ' + elementName + ' was not found.';
       }
     }
 
