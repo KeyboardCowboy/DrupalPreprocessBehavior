@@ -182,30 +182,25 @@
       }
     }
 
-    // @todo: Can we lookup any objects on the behavior that begin with a dollar
-    // sign?  That way they can be declared in the behavior as $myElement
-    // instead of an array of elements and the code inspector won't throw a
-    // hissy when you try to reference them.
+    // Load all the elements.
+    for (var param in behavior) {
+      if (param.indexOf('$') === 0 && typeof behavior[param].selector !== 'undefined') {
+        var element = behavior[param];
+        element.context = element.context || null;
+        element.required = element.required || false;
 
-    // Load the DOM elements needed for the behavior to work.
-    for (var e in behavior.elements) {
-      behavior.elements[e].required = behavior.elements[e].required || false;
-      behavior.elements[e].context = behavior.elements[e].context || false;
-      var element = behavior.elements[e];
-      var elementName = '$' + element.name;
-      var elementContextName = element.context ? '$' + element.context : false;
+        // Check for a context.
+        if (element.context && typeof behavior[element.context] === 'object') {
+          behavior[param] = $(element.selector, behavior[element.context]);
+        }
+        else {
+          behavior[param] = $(element.selector);
+        }
 
-      // Store the element.
-      if (element.context && (typeof behavior[elementContextName] !== 'undefined')) {
-        behavior[elementName] = $(element.selector, behavior[elementContextName]);
-      }
-      else {
-        behavior[elementName] = $(element.selector);
-      }
-
-      // Check for requirements.
-      if (element.required && behavior[elementName].length === 0) {
-        throw errPrefix + 'Required element ' + elementName + ' was not found.';
+        // Check requirements.
+        if (element.required && behavior[param].length === 0) {
+          throw errPrefix + 'Required element ' + param + ' was not found.';
+        }
       }
     }
 
