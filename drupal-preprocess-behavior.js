@@ -172,7 +172,7 @@
     behavior.settings = $.extend({debug: true}, behavior.settings);
 
     // Merge Drupal.settings as defined in the behavior.
-    if (typeof behavior.drupalSettings === 'object') {
+    if (typeof behavior.drupalSettings === 'string') {
       var inlineSettings = getChainedValue(settings, behavior.drupalSettings);
       if (typeof inlineSettings === 'object') {
         $.extend(behavior.settings, inlineSettings);

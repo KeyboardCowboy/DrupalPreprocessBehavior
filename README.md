@@ -29,31 +29,9 @@ usages in Drupal Behaviors.
 **Load the Library and Add Some Custom Settings**
   ```php
   /**
-   * Implements hook_page_alter().
-   *
-   * @param $page
-   */
-  function my_module_page_alter(&$page) {
-    $settings = array(
-      'myModule' => array(
-        'myBehaviorSettings' => array(
-          'currentTime' => time(),
-          'staticValue' => 'Chris',
-        ),
-      ),
-    );
-  
-    $page['content']['#attached']['libraries_load'][] = array('DrupalPreprocessBehavior');
-    $page['content']['#attached']['js'][] = array(
-      'type' => 'setting',
-      'data' => $settings,
-    );
-  }
-  
-  /**
    * Implements hook_library().
    */
-  function my_module_libraries_info() {
+  function example_libraries_info() {
     // Behavior preprocessor.
     $libraries['DrupalPreprocessBehavior'] = array(
       'name' => 'Behavior Preprocessor',
@@ -69,6 +47,31 @@ usages in Drupal Behaviors.
   
     return $libraries;
   }
+  
+  /**
+   * Implements hook_page_alter().
+   *
+   * @param $page
+   */
+  function example_page_alter(&$page) {
+    // Load the behavior preprocessor.
+    $page['content']['#attached']['libraries_load'][] = array('DrupalPreprocessBehavior');
+  
+    // Add custom settings for the behavior.
+    $settings = array(
+      'myModule' => array(
+        'myBehaviorSettings' => array(
+          'currentTime' => time(),
+          'staticValue' => 'Chris',
+        ),
+      ),
+    );
+    
+    $page['content']['#attached']['js'][] = array(
+      'type' => 'setting',
+      'data' => $settings,
+    );
+  }
   ```
 
 **Create Your Behavior**  
@@ -77,13 +80,16 @@ usages in Drupal Behaviors.
     // Allow the behavior to be preprocessed.
     preprocess: true,
     
-    // Provide an array of elements to preload.
-    elements: [
-      {name: 'loginForm', 'selector': '#user-login-form', required: true}
-    ],
+    // (optional) Setup element loaders.
+    $loginForm: {selector: '#user-login-form', required: true},
 
-    // Tell the preprocessor where to load settings from.
+    // (optional) Tell the preprocessor where to load settings from.
     drupalSettings: 'myModule.myBehaviorSettings',
+    
+    // (optional) Add settings to those loaded from the drupalSettings.
+    settings: {
+      debug: true
+    },
 
     // The attach method still provides the context and settings params if
     // you need them.
