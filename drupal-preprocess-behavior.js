@@ -1,3 +1,11 @@
+/**
+ * @file
+ * Drupal behavior preprocesor.
+ *
+ * Author: Chris Albrecht (chris [at] lullabot [dot] com).
+ * Version: 0.2.0
+ */
+
 (function ($) {
   "use strict";
 
@@ -100,10 +108,13 @@
    *    If you have a module adding JS settings to the dom, simply add a line to
    *    the behavior telling it where those settings can be found.
    *
-   * 2. Preloads DOM elements.
-   *    Most behaviors manipulate DOM elements in some way.  Instead of
-   *    littering the 'attach()' method with jQuery selectors, define them in
-   *    the behavior and they will be loaded for you and ready to go.
+   * 2. Checks for required DOM elements.
+   *    Define the elements your behavior will manipulate and the preprocessor
+   *    will check to make sure they exist if they are required and will prevent
+   *    the behavior from being attached if they don't.  A helper method is also
+   *    added to load the element by simply specifying the name you gave it, to
+   *    help keep the 'attach' method from becoming littered with jQuery
+   *    wrappers.
    *
    * 3. Prevents unnecessary loading.
    *    No javascript file should be included on any page that doesn't need it.
@@ -143,12 +154,8 @@
    * - preprocess: Boolean to preprocess this behavior.
    * - drupalSettings: String representing the path to the settings object for
    *     the behavior.
-   * - elements: Array of objects defining the elements to preload.
-   *   - name (required): The name of the element used to assign it as a
-   *     property on the behavior.  Elements are added to the behavior using a
-   *     dollar symbol prefixed to the name.  For example, if you name the
-   *     element 'inputForm' then you can access this element in the behavior
-   *     as 'this.$inputForm'.
+   * - elements: Array of objects defining the elements to preload, keyed on a
+   *     name.
    *   - selector (required): The css selector used to find the element(s).
    *   - context (optional): Tell the element to use a previously defined
    *     element as a context to limit the scope for this element.
@@ -165,14 +172,18 @@
   Drupal.preprocessBehavior = function(behavior, context, settings) {
     var errPrefix = '[PREPROCESS] ';
 
-    // Add a local settings object if one is not set.
+    // Set defaults.
     behavior.settings = behavior.settings || {};
+    behavior.elements = behavior.elements || {};
 
     // Add the global default settings.
-    behavior.settings = $.extend({debug: true}, behavior.settings);
+    behavior.settings = $.extend({debug: false}, behavior.settings);
+
+    // Store the context for loading elements.
+    behavior.context = context;
 
     // Merge Drupal.settings as defined in the behavior.
-    if (typeof behavior.drupalSettings === 'string') {
+    if (typeof behavior.drupalSettings === 'object') {
       var inlineSettings = getChainedValue(settings, behavior.drupalSettings);
       if (typeof inlineSettings === 'object') {
         $.extend(behavior.settings, inlineSettings);
@@ -182,27 +193,26 @@
       }
     }
 
-    // Load all the elements.
-    for (var param in behavior) {
-      if (param.indexOf('$') === 0 && typeof behavior[param].selector !== 'undefined') {
-        var element = behavior[param];
-        element.context = element.context || null;
-        element.required = element.required || false;
+    // Check required elements.
+    for (var e in behavior.elements) {
+      behavior.elements[e].required = behavior.elements[e].required || false;
 
-        // Check for a context.
-        if (element.context && typeof behavior[element.context] === 'object') {
-          behavior[param] = $(element.selector, behavior[element.context]);
-        }
-        else {
-          behavior[param] = $(element.selector);
-        }
-
-        // Check requirements.
-        if (element.required && behavior[param].length === 0) {
-          throw errPrefix + 'Required element ' + param + ' was not found.';
-        }
+      if (behavior.elements[e].required && $(behavior.elements[e].selector, context).length === 0) {
+        throw errPrefix + "Required element '" + e + "' was not found.";
       }
     }
+
+    // Add a hidden method to load an element using the predefined array.
+    $.extend(behavior, {
+      getElement: function(name) {
+        if (typeof this.elements[name] !== 'undefined') {
+          return $(this.elements[name].selector, this.context);
+        }
+        else {
+          throw errPrefix + "Requested element '" + name + "' could not be loaded as it is not defined in the 'elements' property.";
+        }
+      }
+    });
 
     /**
      * Safely extract a value from deep inside an object.

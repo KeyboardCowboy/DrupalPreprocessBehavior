@@ -35,7 +35,7 @@ usages in Drupal Behaviors.
     // Behavior preprocessor.
     $libraries['DrupalPreprocessBehavior'] = array(
       'name' => 'Behavior Preprocessor',
-      'version' => '0.1.0',
+      'version' => '0.2.0',
       'files' => array(
         'js' => array(
           'drupal-preprocess-behavior.js',
@@ -81,7 +81,9 @@ usages in Drupal Behaviors.
     preprocess: true,
     
     // (optional) Setup element loaders.
-    $loginForm: {selector: '#user-login-form', required: true},
+    elements: {
+      loginForm: {selector: '#user-login-form', required: true},    
+    },
 
     // (optional) Tell the preprocessor where to load settings from.
     drupalSettings: 'myModule.myBehaviorSettings',
@@ -94,7 +96,7 @@ usages in Drupal Behaviors.
     // The attach method still provides the context and settings params if
     // you need them.
     attach: function(context, settings) {
-      this.$loginForm.css('background-color', 'red');
+      this.getElement('loginForm').css('background-color', 'red');
       alert(this.settings.staticValue + ' says the time is ' + this.settings.currentTime);
     }
   };
@@ -104,15 +106,9 @@ usages in Drupal Behaviors.
 - `preprocess`: Boolean to preprocess this behavior.
 - `drupalSettings`: String representing the path to the settings object for
     the behavior.
-- `elements`: Array of objects defining the elements to preload.
-  - `name` (required): The name of the element used to assign it as a
-    property on the behavior.  Elements are added to the behavior using a
-    dollar symbol prefixed to the name.  For example, if you name the
-    element 'inputForm' then you can access this element in the behavior
-    as 'this.$inputForm'.
+- `elements`: Array of objects defining the elements to preload, keyed on a
+  name which will be used to get the element.
   - `selector` (required): The css selector used to find the element(s).
-  - `context` (optional): Tell the element to use a previously defined
-    element as a context to limit the scope for this element.
   - `required` (optional): Tell the preprocessor that this element is
     required for it to work and to not attached the behavior if it does not.
 
